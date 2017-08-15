@@ -3,13 +3,15 @@ var jsonParser = bodyParser.json();
 // create application/x-www-form-urlencoded parser 
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 const fetch = require("node-fetch");
+const RestClient = require('node-rest-client').Client;
+const rest = new RestClient();
 module.exports = function(app) {
     var router = app.loopback.Router();
     router.post('/webhook/api-ai/date-bot/fulfillment', jsonParser, function(req, res) {
         var data = req.body;
         loadBible(data)
             .then(result => {
-                var response = "";
+                var response = result;
                 res.setHeader('Content-Type', 'application/json'); //Requires application/json MIME type
                 res.send(JSON.stringify({
                     "speech": response,
@@ -46,15 +48,14 @@ function loadBible(data) {
     var verseEnd = parameters.bible["verse-end"] || verseStart;
 
     var damId = `${version}${bookMap.get(book)}2ET`;
-
-    return fetch(`http://dbt.io/text/verse?key=${process.env.DBT_KEY}&dam_id=${damId}&book_id=${book}&chapter_id=${chapter}&verse_start=${verseStart}&verse_end=${verseEnd}&v=2`)
-        .then(result => {
-            return result.json().then(v=>{
-                var x = v;
-            });
-
-        })
-        .then(json=>{
-            return json;
+    // var uri = `https://private-50b60-pinkgorilla.apiary-mock.com/bible`;
+    var uri = `http://dbt.io/text/verse?key=${process.env.DBT_KEY}&dam_id=${damId}&book_id=${book}&chapter_id=${chapter}&verse_start=${verseStart}&verse_end=${verseEnd}&v=2`;
+    // rest.get(uri, function(data, response){
+    //     console.log(data);
+    // })
+    return fetch(uri)
+        .then(result => result.json())
+        .then(json => {
+            return json.map(verse => `${verse.verse_id}. ${verse.verse_text}`).join("\n");
         });
 }
