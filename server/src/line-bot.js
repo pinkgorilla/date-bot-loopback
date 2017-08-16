@@ -19,17 +19,17 @@ class Maia extends line.Client {
 
     handleEvent(event) {
         var mention = /^@?maia /i;
-        var message = event.message.text;
-        
-        if (event.type !== 'message' || event.message.type !== 'text' || !message.match(mention)) {
+
+        if (event.type !== 'message' || event.message.type !== 'text' || (event.source.type === "group" && !event.message.text.match(mention))) {
             // ignore non-text-message event
             return Promise.resolve(null);
-        } 
-        
+        }
+
+        var message = event.message.text.replace(mention, "");
         var userId = event.source.userId;
 
         var agent = apiai(process.env.APIAI_KEY);
-        var request = agent.textRequest(event.message.text, {
+        var request = agent.textRequest(message, {
             sessionId: userId
         });
 
