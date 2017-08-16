@@ -41,11 +41,12 @@ for (var book of newTestaments)
 
 function loadBible(data) {
     var parameters = data.result.parameters;
-    var version = parameters.bible.version || parameters.version;
-    var book = parameters.bible.book || parameters.book;
-    var chapter = parameters.bible.chapter || parameters.chapter;
-    var verseStart = parameters.bible["verse-start"] || 1;
-    var verseEnd = parameters.bible["verse-end"] || verseStart;
+    var bible = parameters.bible || {};
+    var version = bible.version || parameters.version;
+    var book = bible.book || parameters.book;
+    var chapter = bible.chapter || parameters.chapter;
+    var verseStart = bible["verse-start"] || parameters["verse-start"] || 1;
+    var verseEnd = bible["verse-end"] || parameters["verse-end"] || verseStart || 1;
 
     var damId = `${version}${bookMap.get(book)}2ET`;
     // var uri = `https://private-50b60-pinkgorilla.apiary-mock.com/bible`;

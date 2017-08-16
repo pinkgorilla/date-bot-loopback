@@ -18,10 +18,14 @@ class Maia extends line.Client {
     }
 
     handleEvent(event) {
-        if (event.type !== 'message' || event.message.type !== 'text') {
+        var mention = /^@?maia /i;
+        var message = event.message.text;
+        
+        if (event.type !== 'message' || event.message.type !== 'text' || !message.match(mention)) {
             // ignore non-text-message event
             return Promise.resolve(null);
-        }
+        } 
+        
         var userId = event.source.userId;
 
         var agent = apiai(process.env.APIAI_KEY);
