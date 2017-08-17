@@ -18,7 +18,7 @@ class Maia extends line.Client {
     }
 
     handleEvent(event) {
-        var mention = /^@?maia /i;
+        var mention = /^(@|!)?mia(:|,)? /i;
 
         if (event.type !== 'message' || event.message.type !== 'text' || (event.source.type === "group" && !event.message.text.match(mention))) {
             // ignore non-text-message event
