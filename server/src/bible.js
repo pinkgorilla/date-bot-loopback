@@ -84,7 +84,7 @@ class Bible {
             }
             else {
                 from = parameter.from + (parameter.page - 1) * parameter.size;
-                to = from + parameter.page * parameter.size - 1;
+                to = from + parameter.size - 1;
                 to = parameter.to <= to ? parameter.to : to;
                 if (from > parameter.to) {
                     from = parameter.to + 1 + parseInt((from - parameter.to) / 5, 10) * parameter.size;
@@ -123,18 +123,19 @@ class Bible {
 
     getParameter(data) {
         var parameters = data.result.parameters;
+        var bible = data.result.parameters.bible || {};
         var version = parameters.version;
-        var book = parameters.book;
-        var chapter = Math.abs(parseInt(parameters.chapter || 1, 10));
+        var book = bible.book || parameters.book;
+        var chapter = Math.abs(parseInt(bible.chapter || parameters.chapter || 1, 10));
 
-        var from = Math.abs(parseInt(parameters.from || 1, 10));
-        var to = Math.abs(parseInt(parameters.to || from || 1, 10));
+        var from = Math.abs(parseInt(bible["verse-start"] || parameters.from || 1, 10));
+        var to = Math.abs(parseInt(bible["verse-end"] || parameters.to || from || 1, 10));
         var arr = [from, to].sort((a, b) => a - b);
 
         var page = parseInt(parameters.page || 1, 10);
 
         var size = parseInt(parameters.size || 5, 10);
-        var sizeChange = parseInt(parameters["size-change"] || size, 10);
+        var sizeChange = parseInt(parameters["size-change"] || 0, 10);
         // size = sizeChange === size ? size : sizeChange;
 
         return {
