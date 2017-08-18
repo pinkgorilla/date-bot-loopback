@@ -52,29 +52,80 @@ class Bible {
                     "source": "bible-webhook",
                     "contextOut": [outMore, outVersion]
                 };
+            })
+            .catch((e) => {
+                return {
+                    "speech": e,
+                    "displayText": e,
+                    "data": {},
+                    "source": "bible-webhook",
+                    "contextOut": []
+                };
             });
     }
 
     getVerses(parameter) {
-        var damId = `${parameter.version}${volumes.get(parameter.book).volume}2ET`;
-        var totalVerse = (parameter.to - parameter.from) + 1;
+        var book = volumes.get(parameter.book);
 
-        var from = totalVerse <= parameter.size ? parameter.from + (parameter.page - 1) * totalVerse : parameter.from + (parameter.page - 1) * parameter.size;
-        var to = totalVerse <= parameter.size ? (from + totalVerse - 1) : parameter.page * parameter.size;
+        if (parameter.chapter > book.chapters.size)
+            return Promise.reject(`the book of ${book.name} only contains ${book.chapters.size} chapters`);
+        else {
+            var chapter = book.chapters.get(parameter.chapter);
 
-        var uri = `http://dbt.io/text/verse?key=${process.env.DBT_KEY}&dam_id=${damId}&book_id=${parameter.book}&chapter_id=${parameter.chapter}&verse_start=${from}&verse_end=${to}&v=2`;
-        return fetch(uri)
-            .then(result => result.json())
-            .then(json => {
-                return json.map(verse => `${verse.verse_id}. ${verse.verse_text}`).join("\n");
-            });
+            var damId = `${parameter.version}${book.volume}2ET`;
+            var totalVerse = (parameter.to - parameter.from) + 1;
+
+            var from = parameter.from;
+            var to = parameter.to;
+
+            if (totalVerse <= parameter.size) {
+                from = parameter.from + (parameter.page - 1) * totalVerse;
+                to = from + totalVerse - 1;
+            }
+            else {
+                from = parameter.from + (parameter.page - 1) * parameter.size;
+                to = from + parameter.page * parameter.size - 1;
+                to = parameter.to <= to ? parameter.to : to;
+                if (from > parameter.to) {
+                    from = parameter.to + 1 + parseInt((from - parameter.to) / 5, 10) * parameter.size;
+                    to = from + parameter.size - 1;
+                }
+            }
+            to = to > chapter.length ? chapter.length : to;
+
+            if (from > chapter.length) {
+                if (book.chapters.size >= parameter.chapter + 1) {
+                    parameter.chapter++;
+                    parameter.from = 1;
+                    parameter.to = 1;
+                    from = parameter.from;
+                    to = from + parameter.size - 1;
+                    chapter = book.chapters.get(parameter.chapter);
+                }
+                else {
+                    return Promise.reject(`You have reach the end of book of ${book.name}.`);
+                }
+            }
+
+            var uri = `http://dbt.io/text/verse?key=${process.env.DBT_KEY}&dam_id=${damId}&book_id=${parameter.book}&chapter_id=${parameter.chapter}&verse_start=${from}&verse_end=${to}&v=2`;
+            return fetch(uri)
+                .then(result => result.json())
+                .then(json => {
+                    var header = `${book.name} chapter ${parameter.chapter} verse ${from} - ${to} of ${chapter.length} verses.\n`;
+                    var footer = `\nsay next to show more...`;
+                    return [].concat.apply([], [
+                        [header],
+                        [].concat.apply([], json.map(verse => `${verse.verse_id}. ${verse.verse_text}`)), [footer]
+                    ]).join("\n");
+                });
+        }
     }
 
     getParameter(data) {
         var parameters = data.result.parameters;
         var version = parameters.version;
         var book = parameters.book;
-        var chapter = parameters.chapter;
+        var chapter = Math.abs(parseInt(parameters.chapter || 1, 10));
 
         var from = Math.abs(parseInt(parameters.from || 1, 10));
         var to = Math.abs(parseInt(parameters.to || from || 1, 10));
@@ -84,7 +135,7 @@ class Bible {
 
         var size = parseInt(parameters.size || 5, 10);
         var sizeChange = parseInt(parameters["size-change"] || size, 10);
-        size = sizeChange === size ? size : sizeChange;
+        // size = sizeChange === size ? size : sizeChange;
 
         return {
             "version": version,
@@ -93,7 +144,8 @@ class Bible {
             "from": arr[0],
             "to": arr[1],
             "page": page,
-            "size": size
+            "size": size,
+            "sizeChange": sizeChange
         };
     }
 }
