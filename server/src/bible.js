@@ -57,7 +57,7 @@ class Bible {
                 return {
                     "speech": e,
                     "displayText": e,
-                    "data": {},
+                    "data": { demo: 10 },
                     "source": "bible-webhook",
                     "contextOut": []
                 };
@@ -80,7 +80,12 @@ class Bible {
 
             from = parameter.from + (page - 1) * size;
             to = from + size - 1;
+            to = to > parameter.to ? parameter.to : to;
 
+            if (from > parameter.to) {
+                from = parameter.to + 1 + parseInt((from - parameter.to) / size, 10) * size;
+                to = from + size - 1;
+            }
             // user loads more when end of chapter reached;
             if (from > chapter.length) {
                 if (book.chapters.size >= parameter.chapter + 1) {
@@ -97,11 +102,8 @@ class Bible {
                 }
             }
             // user loads more when requested end verse reached;
-            else if (from > parameter.to) {
-                from = parameter.to + 1 + parseInt((from - parameter.to) / size, 10) * size;
-                to = from + size - 1;
-            }
-            to = to > chapter.length ? chapter.length : to > parameter.to ? parameter.to : to;
+
+            to = to > chapter.length ? chapter.length : to;
 
             var uri = `http://dbt.io/text/verse?key=${process.env.DBT_KEY}&dam_id=${damId}&book_id=${parameter.book}&chapter_id=${parameter.chapter}&verse_start=${from}&verse_end=${to}&v=2`;
             return fetch(uri)
@@ -132,6 +134,7 @@ class Bible {
         var page = parseInt(parameters.page || 1, 10);
 
         var size = parameters.size ? parseInt(parameters.size, 10) : null;
+        var current = parameters.current ? parseInt(parameters.current, 10) : null;
 
         return {
             "version": version,
@@ -140,7 +143,8 @@ class Bible {
             "from": arr[0],
             "to": arr[1],
             "page": page,
-            "size": size
+            "size": size,
+            "current": current
         };
     }
 }
