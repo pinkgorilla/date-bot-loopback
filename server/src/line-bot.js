@@ -34,9 +34,22 @@ class Maia extends line.Client {
         });
 
         request.on('response', (response) => {
-            const echo = { type: 'text', text: response.result.fulfillment.speech };
-            // use reply API
-            return this.replyMessage(event.replyToken, echo);
+            var message = response.result.fulfillment.speech;
+            var messages = [];
+            var chunk;
+            while (message.length > 0) {
+                var offset = message.indexOf("\n", 1500);
+                if (offset < 0) {
+                    chunk = message;
+                    message = "";
+                }
+                else {
+                    chunk = message.substr(0, offset);
+                    message = message.substr(offset);
+                }
+                messages.push({ type: 'text', text: chunk });
+            }
+            return this.replyMessage(event.replyToken, messages);
         });
 
         request.on('error', (error) => {
