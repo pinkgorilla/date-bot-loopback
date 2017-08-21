@@ -82,7 +82,7 @@ class Bible {
             to = from + size - 1;
             to = to > parameter.to ? parameter.to : to;
 
-            if (from > parameter.to) {
+            if (from >= parameter.to) {
                 from = parameter.to + 1 + parseInt((from - parameter.to) / size, 10) * size;
                 to = from + size - 1;
             }
@@ -128,7 +128,7 @@ class Bible {
         var chapter = Math.abs(parseInt(bible.chapter || parameters.chapter || 1, 10));
 
         var from = Math.abs(parseInt(bible["verse-start"] || parameters.from || 1, 10));
-        var to = Math.abs(parseInt(bible["verse-end"] || parameters.to || (from + defaultSize) || 1, 10));
+        var to = Math.abs(parseInt(bible["verse-end"] || parameters.to || (from + defaultSize-1) || 1, 10));
         var arr = [from, to].sort((a, b) => a - b);
 
         var page = parseInt(parameters.page || 1, 10);
