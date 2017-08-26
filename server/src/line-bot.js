@@ -47,6 +47,7 @@ class Maia extends line.Client {
                     chunk = message.substr(0, offset);
                     message = message.substr(offset);
                 }
+                chunk =  chunk.replace(/^\n+|\n+$/g, '');
                 messages.push({ type: 'text', text: chunk });
             }
             return this.replyMessage(event.replyToken, messages);

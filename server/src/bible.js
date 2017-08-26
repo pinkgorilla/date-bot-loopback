@@ -82,8 +82,10 @@ class Bible {
             to = from + size - 1;
             to = to > parameter.to ? parameter.to : to;
 
-            if (from >= parameter.to) {
-                from = parameter.to + 1 + parseInt((from - parameter.to) / size, 10) * size;
+            if (from >= parameter.to && page > 1) {
+                var pageOffset = parseInt((from - parameter.to) / size, 10);
+                pageOffset = parameter.from === parameter.to ? pageOffset - 1 : pageOffset;
+                from = parameter.to + 1 + pageOffset * size;
                 to = from + size - 1;
             }
             // user loads more when end of chapter reached;
@@ -126,12 +128,14 @@ class Bible {
         var version = parameters.version;
         var book = bible.book || parameters.book;
         var chapter = Math.abs(parseInt(bible.chapter || parameters.chapter || 1, 10));
+        var page = parseInt(parameters.page || 1, 10);
 
-        var from = Math.abs(parseInt(bible["verse-start"] || parameters.from || 1, 10));
-        var to = Math.abs(parseInt(bible["verse-end"] || parameters.to || (from + defaultSize-1) || 1, 10));
+        var xFrom = Math.abs(parseInt(bible["verse-start"] || parameters.from, 10));
+        xFrom = isNaN(xFrom) ? 0 : xFrom;
+        var from = xFrom < 1 ? 1 : xFrom;
+        var to = Math.abs(parseInt(bible["verse-end"] || parameters.to || (page === 1 && xFrom ? from : (from + defaultSize - 1)) || 1, 10));
         var arr = [from, to].sort((a, b) => a - b);
 
-        var page = parseInt(parameters.page || 1, 10);
 
         var size = parameters.size ? parseInt(parameters.size, 10) : null;
         var current = parameters.current ? parseInt(parameters.current, 10) : null;
