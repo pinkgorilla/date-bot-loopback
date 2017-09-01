@@ -4,11 +4,14 @@ var jsonParser = bodyParser.json();
 
 const Bible = require('../src/bible');
 const bible = new Bible();
-
+const Uid = require('../src/userid');
+const uid = new Uid();
+  
 module.exports = function(app) {
     var router = app.loopback.Router();
     router.post('/webhook/api-ai/date-bot/fulfillment',
-        jsonParser,
+        jsonParser, 
+        uid.middleware(),
         bible.middleware(),
         function(req, res) {
             var response = "i cannot process the information you provided";

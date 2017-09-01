@@ -27,11 +27,25 @@ class Maia extends line.Client {
 
         var message = event.message.text.replace(mention, "");
         var userId = event.source.userId;
+        var groupId = event.source.groupId;
+        var session = {
+            name: 'session',
+            parameters: {
+                'userid': userId,
+                'groupid': groupId,
+                'agent': "line"
+            }
+        };
 
         var agent = apiai(process.env.APIAI_KEY);
-        var request = agent.textRequest(message, {
-            sessionId: userId
-        });
+        var data = {
+            sessionId: userId,
+            contexts: [session]
+        };
+        if (session.parameters.groupid)
+            delete session.parameters.groupid;
+
+        var request = agent.textRequest(message, data);
 
         request.on('response', (response) => {
             var message = response.result.fulfillment.speech;
@@ -47,7 +61,7 @@ class Maia extends line.Client {
                     chunk = message.substr(0, offset);
                     message = message.substr(offset);
                 }
-                chunk =  chunk.replace(/^[\n\s\r]*|[\n\s\r]*$/g, '');
+                chunk = chunk.replace(/^[\n\s\r]*|[\n\s\r]*$/g, '');
                 messages.push({ type: 'text', text: chunk });
             }
             return this.replyMessage(event.replyToken, messages);

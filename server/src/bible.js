@@ -31,6 +31,14 @@ class Bible {
     load(data) {
         var parameter = this.getParameter(data);
         var action = data.result.action;
+        var session = {
+            "name": "session",
+            "lifespan": 5,
+            "parameters": {
+                "userid": data.userid,
+                "agent": data.agent
+            }
+        };
 
         if (action === "bible-read-more")
             parameter.page += 1;
@@ -50,7 +58,7 @@ class Bible {
                     "displayText": verses,
                     "data": {},
                     "source": "bible-webhook",
-                    "contextOut": [outMore, outVersion]
+                    "contextOut": [outMore, outVersion, session]
                 };
             })
             .catch((e) => {
@@ -106,13 +114,14 @@ class Bible {
             // user loads more when requested end verse reached;
 
             to = to > chapter.length ? chapter.length : to;
+            parameter.offset = to;
 
             var uri = `http://dbt.io/text/verse?key=${process.env.DBT_KEY}&dam_id=${damId}&book_id=${parameter.book}&chapter_id=${parameter.chapter}&verse_start=${from}&verse_end=${to}&v=2`;
             return fetch(uri)
                 .then(result => result.json())
                 .then(json => {
                     var header = `${book.name} chapter ${parameter.chapter} verse ${from} - ${to} of ${chapter.length} verses.\n`;
-                    var footer = `\nsay next to show more...\npowered by bible.is`;
+                    var footer = `\n[DEV]say next to show more...\npowered by bible.is`;
                     return [].concat.apply([], [
                         [header],
                         [].concat.apply([], json.map(verse => `${verse.verse_id}. ${verse.verse_text}`)), [footer]
@@ -138,7 +147,7 @@ class Bible {
 
 
         var size = parameters.size ? parseInt(parameters.size, 10) : null;
-        var current = parameters.current ? parseInt(parameters.current, 10) : null;
+        var offset = parameters.offset ? parseInt(parameters.offset, 10) : null;
 
         return {
             "version": version,
@@ -148,7 +157,7 @@ class Bible {
             "to": arr[1],
             "page": page,
             "size": size,
-            "current": current
+            "offset": offset
         };
     }
 }
