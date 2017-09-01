@@ -18,7 +18,7 @@ class Maia extends line.Client {
     }
 
     handleEvent(event) {
-        var mention = /^(@|!)?mia(:|,)? /i;
+        var mention = /^(@|!)?bot(:|,)? /i;
 
         if (event.type !== 'message' || event.message.type !== 'text' || (event.source.type === "group" && !event.message.text.match(mention))) {
             // ignore non-text-message event
@@ -42,7 +42,7 @@ class Maia extends line.Client {
             sessionId: userId,
             contexts: [session]
         };
-        if (session.parameters.groupid)
+        if (!session.parameters.groupid)
             delete session.parameters.groupid;
 
         var request = agent.textRequest(message, data);
