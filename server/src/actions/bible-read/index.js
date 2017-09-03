@@ -1,44 +1,16 @@
 const fetch = require("node-fetch");
-const volumes = require("./bible-volume");
+const volumes = require("./volumes");
 const action = /^bible-read/i;
+const Action = require("../action");
 
-class Bible {
+class Bible extends Action {
     constructor() {
-        this.load = this.load.bind(this);
+        super(action);
     }
-    middleware() {
-        return (req, res, next) => {
-            var payload = req.body;
-            if (!payload.result.action.match(action) || payload.result.actionIncomplete)
-                next();
-            else {
-                this.load(payload)
-                    .then(result => {
-                        res.setHeader('Content-Type', 'application/json'); //Requires application/json MIME type
-                        res.send(JSON.stringify(result));
-                    })
-                    .catch(e => {
-                        var response = e;
-                        res.setHeader('Content-Type', 'application/json'); //Requires application/json MIME type
-                        res.send(JSON.stringify({
-                            "speech": response,
-                            "displayText": response
-                        }));
-                    });
-            }
-        };
-    }
-    load(data) {
+
+    getResponse(data) {
         var parameter = this.getParameter(data);
         var action = data.result.action;
-        var session = {
-            "name": "session",
-            "lifespan": 5,
-            "parameters": {
-                "userid": data.userid,
-                "agent": data.agent
-            }
-        };
 
         if (action === "bible-read-more")
             parameter.page += 1;
@@ -58,7 +30,7 @@ class Bible {
                     "displayText": verses,
                     "data": {},
                     "source": "bible-webhook",
-                    "contextOut": [outMore, outVersion, session]
+                    "contextOut": [outMore, outVersion]
                 };
             })
             .catch((e) => {
@@ -121,7 +93,7 @@ class Bible {
                 .then(result => result.json())
                 .then(json => {
                     var header = `${book.name} chapter ${parameter.chapter} verse ${from} - ${to} of ${chapter.length} verses.\n`;
-                    var footer = `\n[DEV]say next to show more...\npowered by bible.is`;
+                    var footer = `\nsay next to show more...\npowered by bible.is`;
                     return [].concat.apply([], [
                         [header],
                         [].concat.apply([], json.map(verse => `${verse.verse_id}. ${verse.verse_text}`)), [footer]

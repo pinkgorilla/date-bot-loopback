@@ -1,0 +1,38 @@
+{
+  "name": "Date",
+  "base": "PersistedModel",
+  "idInjection": false,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "realm": {
+      "type": "string",
+      "required": true,
+      "id": 1,
+      "description": "chat platform id"
+    },
+    "id": {
+      "type": "string",
+      "required": true,
+      "id": 2,
+      "description": "group/chat room id"
+    },
+    "creator": {
+      "type": "string",
+      "required": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "day": {
+      "type": "number",
+      "required": true
+    }
+  },
+  "validations": [],
+  "relations": {},
+  "acls": [],
+  "methods": {}
+}
