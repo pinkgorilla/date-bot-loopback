@@ -1,5 +1,5 @@
 'use strict';
-
+const line = require('@line/bot-sdk');
 const action = /^get-user-id/i;
 const Action = require("../action");
 
@@ -18,7 +18,7 @@ class GetUserId extends Action {
             "source": "get-user-id-action",
             "contextOut": []
         });
-    }
+    } 
 }
 
 module.exports = GetUserId;

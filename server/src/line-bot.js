@@ -1,11 +1,16 @@
 const line = require('@line/bot-sdk');
 const apiai = require("apiai");
+const config = {
+    channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+    channelSecret: process.env.LINE_CHANNEL_SECRET,
+};
 
 
-class Maia extends line.Client {
+class LineBot extends line.Client {
 
-    constructor(config) {
+    constructor() {
         super(config);
+        this.config = config;
         this.handleEvent = this.handleEvent.bind(this);
     }
 
@@ -75,4 +80,6 @@ class Maia extends line.Client {
     }
 }
 
-module.exports = Maia;
+var mia = new LineBot();
+
+module.exports = mia;
