@@ -1,5 +1,5 @@
-const line = require('@line/bot-sdk');
-const apiai = require("apiai");
+const line = require('@line/bot-sdk'); 
+const apiai = require('./apiai');
 const config = {
     channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
     channelSecret: process.env.LINE_CHANNEL_SECRET,
@@ -41,8 +41,7 @@ class LineBot extends line.Client {
                 'agent': "line"
             }
         };
-
-        var agent = apiai(process.env.APIAI_KEY);
+ 
         var data = {
             sessionId: userId,
             contexts: [session]
@@ -50,7 +49,7 @@ class LineBot extends line.Client {
         if (!session.parameters.groupid)
             delete session.parameters.groupid;
 
-        var request = agent.textRequest(message, data);
+        var request = apiai.textRequest(message, data);
 
         request.on('response', (response) => {
             var message = response.result.fulfillment.speech;

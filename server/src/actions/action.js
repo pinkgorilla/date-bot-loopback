@@ -1,8 +1,11 @@
 'use strict';
+const apiai = require('../apiai');
+const shortid = require('shortid');
 
 class Action {
     constructor(action) {
         this.execute = this.execute.bind(this);
+        this.triggerEvent = this.triggerEvent.bind(this);
         this.action = action;
     }
 
@@ -60,6 +63,22 @@ class Action {
 
     getResponse(payload) {
         return Promise.reject("not implemented");
+    }
+
+    triggerEvent(event, sessionId) {
+        return new Promise((resolve, reject) => {
+            var request = apiai.eventRequest(event, { sessionId: sessionId });
+
+            request.on('response', (response) => {
+                resolve(response);
+            });
+
+            request.on('error', (error) => {
+                reject(error);
+            });
+
+            request.end();
+        });
     }
 }
 

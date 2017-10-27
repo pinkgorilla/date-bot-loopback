@@ -51,7 +51,6 @@ class Bible extends Action {
             return Promise.reject(`the book of ${book.name} only contains ${book.chapters.size} chapters`);
         else {
             var chapter = book.chapters.get(parameter.chapter);
-            var damId = `${parameter.version}${book.volume}2ET`;
 
             var from = parameter.from;
             var to = parameter.to;
@@ -88,15 +87,30 @@ class Bible extends Action {
             to = to > chapter.length ? chapter.length : to;
             parameter.offset = to;
 
-            var uri = `http://dbt.io/text/verse?key=${process.env.DBT_KEY}&dam_id=${damId}&book_id=${parameter.book}&chapter_id=${parameter.chapter}&verse_start=${from}&verse_end=${to}&v=2`;
-            return fetch(uri)
-                .then(result => result.json())
+            var header = `[${parameter.version.join("-")}] ${book.name} chapter ${parameter.chapter}/${book.chapters.size} verse ${from} - ${to} of ${chapter.length} verses.\n`;
+            var footer = `\nsay next to show more...\npowered by bible.is`;
+
+            var results = parameter.version.map((version, vIndex) => {
+                var damId = `${version}${book.volume}2ET`;
+                var uri = `http://dbt.io/text/verse?key=${process.env.DBT_KEY}&dam_id=${damId}&book_id=${parameter.book}&chapter_id=${parameter.chapter}&verse_start=${from}&verse_end=${to}&v=2`;
+                return fetch(uri)
+                    .then(result => result.json());
+            });
+
+            return Promise.all(results)
                 .then(json => {
-                    var header = `${book.name} chapter ${parameter.chapter} verse ${from} - ${to} of ${chapter.length} verses.\n`;
-                    var footer = `\nsay next to show more...\npowered by bible.is`;
+                    var merged = [].concat.apply([], json).sort((a, b) => {
+                        var aId = parseInt(a.verse_id, 10);
+                        var bId = parseInt(b.verse_id, 10);
+                        if (aId <= bId)
+                            return -1;
+                        else
+                            return 1;
+                    });
+
                     return [].concat.apply([], [
                         [header],
-                        [].concat.apply([], json.map(verse => `${verse.verse_id}. ${verse.verse_text}`)), [footer]
+                        [].concat.apply([], merged.map(verse => `${verse.verse_id}. ${verse.verse_text}`)), [footer]
                     ]).join("\n");
                 });
         }
@@ -106,7 +120,7 @@ class Bible extends Action {
         var defaultSize = 10;
         var parameters = data.result.parameters;
         var bible = data.result.parameters.bible || {};
-        var version = parameters.version;
+        var version = parameters.version.length == 0 ? ["INZNTV"] : parameters.version;
         var book = bible.book || parameters.book;
         var chapter = Math.abs(parseInt(bible.chapter || parameters.chapter || 1, 10));
         var page = parseInt(parameters.page || 1, 10);

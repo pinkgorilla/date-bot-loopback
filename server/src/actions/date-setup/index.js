@@ -2,6 +2,7 @@
 const action = /^date-setup/i;
 const Action = require("../action");
 const app = require('../../../server');
+const apiai = require('../../apiai');
 
 class DateSetup extends Action {
     constructor() {
@@ -10,18 +11,30 @@ class DateSetup extends Action {
 
     getResponse(payload) {
         var session = payload.session.parameters;
-        var response = `please select DATE`;
-        var outContext = Object.assign({}, payload.session)
-        outContext.name = "date-setup"
-        outContext.lifespan = 5;
+        var event = {
+            name: "date-event",
+            data: {
+                name: "param1 value",
+                day: 2
+            }
+        };
 
-        return Promise.resolve({
-            "speech": response,
-            "displayText": response,
-            "data": {},
-            "source": "date-setup-action",
-            "contextOut": [outContext]
-        });
+        return this.triggerEvent(event, session.userid)
+            .then(result => {
+                var response = result.result.fulfillment.speech;
+                // var response = `please select DATE`;
+                // var outContext = Object.assign({}, payload.session);
+                // outContext.name = "date-setup";
+                // outContext.lifespan = 5;
+
+                return {
+                    "speech": response,
+                    "displayText": response,
+                    "data": {},
+                    "source": "date-setup-action",
+                    "contextOut": []
+                };
+            });
     }
 }
 
