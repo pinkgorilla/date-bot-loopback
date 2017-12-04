@@ -113,24 +113,46 @@ class Bible extends Action {
 
             return Promise.all(results)
                 .then(json => {
-                    var merged = [].concat.apply([], json).sort((a, b) => {
+                    var map = new Map();
+                    var merged = [].concat.apply([], json);
+                    var reducer = (map, data) => {
+                        if (!map.has(data.verse_id))
+                            map.set(data.verse_id, []);
+                        map.get(data.verse_id).push(data);
+                        return map;
+                    };
+                    var sorted = merged.sort((a, b) => {
                         var aId = parseInt(a.verse_id, 10);
                         var bId = parseInt(b.verse_id, 10);
                         if (aId <= bId) {
-                            if (a.vIndex <= b.vIndex)
-                                return -1;
-                            return 1;
+                            return -1;
                         }
                         else {
-                            if (a.vIndex <= b.vIndex)
-                                return -1;
                             return 1;
                         }
                     });
+                    var reducedMap = sorted.reduce(reducer, map);
+                    reducedMap.forEach((value, key, map) => {
+                        var sortedValue = value.sort((a, b) => {
+                            var aId = parseInt(a.vIndex, 10);
+                            var bId = parseInt(b.vIndex, 10);
+                            if (aId <= bId) {
+                                return -1;
+                            }
+                            else {
+                                return 1;
+                            }
+                        });
+                        map.set(key, sortedValue);
+                    });
+                    var result = [];
+                    for (var [key, value] of reducedMap) {
+                        result = result.concat(value);
+                    }
 
                     return [].concat.apply([], [
                         [header],
-                        [].concat.apply([], merged.map(verse => `${verse.verse_id}. ${verse.verse_text}`)), [footer]
+                        [].concat.apply([], result.map(verse => `${verse.verse_id}. ${verse.verse_text}`)), [footer]
                     ]).join("\n");
                 });
         }
