@@ -67,6 +67,7 @@ class Bible extends Action {
                 from = parameter.to + 1 + pageOffset * size;
                 to = from + size - 1;
             }
+
             // user loads more when end of chapter reached;
             if (from > chapter.length) {
                 if (book.chapters.size >= parameter.chapter + 1) {
@@ -88,13 +89,26 @@ class Bible extends Action {
             parameter.offset = to;
 
             var header = `[${parameter.version.join("-")}] ${book.name} chapter ${parameter.chapter}/${book.chapters.size} verse ${from} - ${to} of ${chapter.length} verses.\n`;
-            var footer = `\nsay next to show more...\npowered by bible.is`;
+
+            var nextTo = to;
+            var footer = `\nsay next to show more...`;
+            if (parameter.chapter === book.chapters.size && nextTo === chapter.length)
+                footer = `You have reach the end of book of ${book.name}.`;
+            else if (parameter.chapter < book.chapters.size && nextTo === chapter.length)
+                footer = `You have reach the end of chapter ${parameter.chapter}. say next to show chapter ${parameter.chapter+1}.`;
+            footer += `\npowered by bible.is`;
 
             var results = parameter.version.map((version, vIndex) => {
                 var damId = `${version}${book.volume}2ET`;
                 var uri = `http://dbt.io/text/verse?key=${process.env.DBT_KEY}&dam_id=${damId}&book_id=${parameter.book}&chapter_id=${parameter.chapter}&verse_start=${from}&verse_end=${to}&v=2`;
                 return fetch(uri)
-                    .then(result => result.json());
+                    .then(result => result.json())
+                    .then(json => {
+                        return json.map((verse) => {
+                            verse.vIndex = vIndex;
+                            return verse;
+                        });
+                    });
             });
 
             return Promise.all(results)
@@ -102,10 +116,16 @@ class Bible extends Action {
                     var merged = [].concat.apply([], json).sort((a, b) => {
                         var aId = parseInt(a.verse_id, 10);
                         var bId = parseInt(b.verse_id, 10);
-                        if (aId <= bId)
-                            return -1;
-                        else
+                        if (aId <= bId) {
+                            if (a.vIndex <= b.vIndex)
+                                return -1;
                             return 1;
+                        }
+                        else {
+                            if (a.vIndex <= b.vIndex)
+                                return -1;
+                            return 1;
+                        }
                     });
 
                     return [].concat.apply([], [
